@@ -9,14 +9,18 @@ import os
 
 app = Flask(__name__)
 
-# Firebase
+# Firebase Initialization
 firebase_config = json.loads(os.environ["FIREBASE_CREDENTIALS"])
 cred = credentials.Certificate(firebase_config)
 firebase_admin.initialize_app(cred)
 
-# Sessions
+# ✅ Missing Firestore client setup
+db = firestore.client()
+
+# In-memory session store
 sessions = {}
 
+# Language settings
 languages = {"1": "hindi", "2": "gujarati"}
 language_texts = {
     "hindi": {
@@ -45,6 +49,8 @@ def whatsapp_bot():
     sender = request.values.get("From", "").strip()
     resp = MessagingResponse()
     msg = resp.message()
+
+    print(f"[Incoming] From: {sender} | Message: {incoming_msg}")
 
     if sender not in sessions:
         sessions[sender] = {"stage": "language"}
@@ -84,10 +90,12 @@ def whatsapp_bot():
 def show_products(msg, sender, lang):
     texts = language_texts[lang]
     products = db.collection("products").stream()
+
     response = texts["products_intro"]
     for p in products:
         data = p.to_dict()
         response += f"🧾 {data['name']}\n💰 ₹{data['price']} प्रति यूनिट\n\n"
+
     response += texts["enter_products"]
     sessions[sender]["stage"] = "order_input"
     msg.body(response)
