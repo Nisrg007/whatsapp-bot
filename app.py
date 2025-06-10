@@ -4,13 +4,15 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import re
 from datetime import datetime
+import json
+import os
 
 app = Flask(__name__)
 
 # Firebase
-cred = credentials.Certificate("firebase-service-account.json")
+firebase_config = json.loads(os.environ["FIREBASE_CREDENTIALS"])
+cred = credentials.Certificate(firebase_config)
 firebase_admin.initialize_app(cred)
-db = firestore.client()
 
 # Sessions
 sessions = {}
